@@ -1,18 +1,15 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "$lib": ["./src/lib"],
-      "$lib/*": ["./src/lib/*"],
-      "$assets": ["./src/assets"],
-      "$assets/*": ["./src/assets/*"],
-      "$features": ["./src/features"],
-      "$features/*": ["./src/features/*"]
-    }
-  }
+	"files": [],
+	"references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"$lib": ["./src/lib"],
+			"$lib/*": ["./src/lib/*"],
+			"$assets": ["./src/assets"],
+			"$assets/*": ["./src/assets/*"],
+			"$features": ["./src/features"],
+			"$features/*": ["./src/features/*"]
+		}
+	}
 }
