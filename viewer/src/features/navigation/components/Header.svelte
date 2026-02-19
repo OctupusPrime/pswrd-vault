@@ -5,27 +5,24 @@
 	import MoonIcon from '@lucide/svelte/icons/moon';
 
 	import { Button } from '$lib/components/ui/button/index.js';
+
 	import { appearance } from '$lib/stores/appearance.svelte';
-	import { cn } from '$lib/utils';
 
 	interface Props {
 		title: string;
 		previousPageUrl?: string;
-		classes?: {
-			root?: string;
-		};
 	}
 
-	let { title, previousPageUrl, classes = {} }: Props = $props();
+	let { title, previousPageUrl }: Props = $props();
 </script>
 
-<header class={cn('flex h-12 items-center gap-2 border-b bg-background px-4', classes.root)}>
+<header class="flex h-12 items-center gap-2 border-b bg-background px-4">
 	{#if previousPageUrl}
 		<Button onclick={() => router.show(previousPageUrl)} variant="ghost" size="icon-sm">
 			<ArrowLeftIcon />
 		</Button>
 	{/if}
-	<h1 class={'text-base font-medium'}>{title}</h1>
+	<h1 class="text-base font-medium">{title}</h1>
 
 	<Button
 		onclick={() => appearance.toggleColorSchema()}

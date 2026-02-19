@@ -66,6 +66,14 @@
 		queryParams = ctx.params;
 	});
 
+	router('/:entryId', authMiddleware, (ctx) => {
+		use({
+			page: import('./(authenticated)/$entryId.svelte'),
+			pageName: 'entry'
+		});
+		queryParams = ctx.params;
+	});
+
 	onMount(() => {
 		router.start({
 			hashbang: true
