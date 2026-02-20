@@ -2,9 +2,12 @@
 	import router from 'page';
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
+	import EyeIcon from '@lucide/svelte/icons/eye';
+	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 
+	import * as InputGroup from '$lib/components/ui/input-group/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
 
@@ -21,6 +24,7 @@
 	let passphrase = $state<string[]>([]);
 	let currentWordIndex = $state(0);
 
+	let inputRevealWord = $state(false);
 	let errorMessage = $state<string | null>(null);
 
 	const isPreviousDisabled = $derived.by(() => {
@@ -77,15 +81,35 @@
 	<Card.Content>
 		<form onsubmit={handleSubmit} autocomplete="off">
 			<div class="grid gap-2">
+				<Label for="passphrase-word">
+					Word {currentWordIndex + 1} of {MAX_PASSPHRASE_WORDS}
+				</Label>
 				{#key currentWordIndex}
-					<Input
-						autofocus
-						name="passphrase-word"
-						type="password"
-						autocomplete="one-time-code"
-						defaultValue={passphrase[currentWordIndex] ?? ''}
-						oninput={() => (errorMessage = null)}
-					/>
+					<InputGroup.Root>
+						<InputGroup.Input
+							autofocus
+							name="passphrase-word"
+							type={inputRevealWord ? 'text' : 'password'}
+							autocomplete="one-time-code"
+							defaultValue={passphrase[currentWordIndex] ?? ''}
+							oninput={() => (errorMessage = null)}
+						/>
+						<InputGroup.Addon align="inline-end">
+							<InputGroup.Button
+								aria-label={inputRevealWord ? 'Hide passphrase word' : 'Show passphrase word'}
+								title={inputRevealWord ? 'Hide passphrase word' : 'Show passphrase word'}
+								type="button"
+								size="icon-xs"
+								onclick={() => (inputRevealWord = !inputRevealWord)}
+							>
+								{#if inputRevealWord}
+									<EyeOffIcon />
+								{:else}
+									<EyeIcon />
+								{/if}
+							</InputGroup.Button>
+						</InputGroup.Addon>
+					</InputGroup.Root>
 				{/key}
 				{#if errorMessage}
 					<p class="text-sm text-destructive">{errorMessage}</p>
