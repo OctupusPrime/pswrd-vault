@@ -97,15 +97,14 @@
 						<InputGroup.Addon align="inline-end">
 							<InputGroup.Button
 								aria-label={inputRevealWord ? 'Hide passphrase word' : 'Show passphrase word'}
-								title={inputRevealWord ? 'Hide passphrase word' : 'Show passphrase word'}
 								type="button"
 								size="icon-xs"
 								onclick={() => (inputRevealWord = !inputRevealWord)}
 							>
 								{#if inputRevealWord}
-									<EyeOffIcon />
-								{:else}
 									<EyeIcon />
+								{:else}
+									<EyeOffIcon />
 								{/if}
 							</InputGroup.Button>
 						</InputGroup.Addon>

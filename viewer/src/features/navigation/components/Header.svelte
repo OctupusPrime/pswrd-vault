@@ -18,13 +18,19 @@
 
 <header class="flex h-12 items-center gap-2 border-b bg-background px-4">
 	{#if previousPageUrl}
-		<Button onclick={() => router.show(previousPageUrl)} variant="ghost" size="icon-sm">
+		<Button
+			aria-label="Go back"
+			onclick={() => router.show(previousPageUrl)}
+			variant="ghost"
+			size="icon-sm"
+		>
 			<ArrowLeftIcon />
 		</Button>
 	{/if}
 	<h1 class="text-base font-medium">{title}</h1>
 
 	<Button
+		aria-label="Toggle theme"
 		onclick={() => appearance.toggleColorSchema()}
 		variant="outline"
 		size="icon-sm"

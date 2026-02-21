@@ -32,13 +32,10 @@
 	</Table.Header>
 	<Table.Body>
 		{#each filteredEntries as entry (entry.id)}
-			{@const emoji = getDeterministicEmoji(entry.name)}
-			{@const updatedAt = dayjs(entry.updatedAt).format('DD/MM/YYYY')}
-
 			<Table.Row>
 				<Table.Cell>
 					<div class="grid h-8 w-8 place-items-center rounded-full bg-input text-lg">
-						{emoji}
+						{getDeterministicEmoji(entry.name)}
 					</div>
 				</Table.Cell>
 				<Table.Cell>
@@ -47,14 +44,20 @@
 					</Button>
 				</Table.Cell>
 				<Table.Cell class="text-end">
-					{updatedAt}
+					{dayjs(entry.updatedAt).format('DD/MM/YYYY')}
 				</Table.Cell>
 			</Table.Row>
 		{/each}
 		{#if filteredEntries.length === 0}
 			<Table.Row class="h-14">
 				<Table.Cell colspan={3} class="text-center">
-					{entriesListStore.search ? 'No entries found.' : 'Vault is locked.'}
+					{#if entriesListStore.search}
+						No entries found.
+					{:else if !vault.isUnlocked}
+						Vault is locked.
+					{:else}
+						No entries available.
+					{/if}
 				</Table.Cell>
 			</Table.Row>
 		{/if}
