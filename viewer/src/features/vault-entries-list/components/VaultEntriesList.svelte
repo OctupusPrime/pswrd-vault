@@ -52,11 +52,11 @@
 			<Table.Row class="h-14">
 				<Table.Cell colspan={3} class="text-center">
 					{#if entriesListStore.search}
-						No entries found.
+						No entries found
 					{:else if !vault.isUnlocked}
 						Vault is locked.
 					{:else}
-						No entries available.
+						No entries available
 					{/if}
 				</Table.Cell>
 			</Table.Row>

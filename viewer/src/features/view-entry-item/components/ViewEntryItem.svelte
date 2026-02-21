@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 	import dayjs from 'dayjs';
-	import CopyIcon from '@lucide/svelte/icons/copy';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 
@@ -39,19 +38,7 @@
 				value: revealResult
 			};
 		} catch (error) {
-			toast.error('Failed to reveal item. Please try again.');
-		}
-	};
-
-	const handleCopyItem = async (itemId: string) => {
-		if (!entryItem) return;
-
-		try {
-			const valueToCopy = await vault.revealItem(entryItem.id, itemId);
-			await navigator.clipboard.writeText(valueToCopy);
-			toast.success('Item copied to clipboard!');
-		} catch (error) {
-			toast.error('Failed to copy item. Please try again.');
+			toast.error('Failed to reveal item.');
 		}
 	};
 </script>
@@ -70,7 +57,7 @@
 						<Button
 							variant="outline"
 							size="icon-sm"
-							class="ml-auto"
+							class="ml-auto shrink-0"
 							onclick={() => toggleRevealItem(item.id)}
 						>
 							{#if isRevealed}
@@ -78,9 +65,6 @@
 							{:else}
 								<EyeOffIcon />
 							{/if}
-						</Button>
-						<Button variant="outline" size="icon-sm" onclick={() => handleCopyItem(item.id)}>
-							<CopyIcon />
 						</Button>
 					</div>
 					{#if isRevealed}
@@ -95,16 +79,13 @@
 						<h3 class="font-medium tracking-tight">
 							{item.name}
 						</h3>
-						<Button variant="outline" size="icon-sm" onclick={() => handleCopyItem(item.id)}>
-							<CopyIcon />
-						</Button>
 					</div>
 					<p class="text-sm leading-7 break-all whitespace-pre-wrap">{item.value}</p>
 				</div>
 			{/if}
 		{/each}
 		{#if entryItem.items.length === 0}
-			<p class="py-3 text-center text-muted-foreground">No items in this entry.</p>
+			<p class="py-3 text-center text-muted-foreground">No items in this entry</p>
 		{/if}
 
 		<Separator />
@@ -121,9 +102,9 @@
 {:else}
 	<p class="py-3 text-center text-muted-foreground">
 		{#if !vault.isUnlocked}
-			Vault is locked.
+			Vault is locked
 		{:else}
-			Entry not found.
+			Entry not found
 		{/if}
 	</p>
 {/if}

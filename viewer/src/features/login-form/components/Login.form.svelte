@@ -25,6 +25,9 @@
 	let passphrase = $state<string[]>([]);
 	let currentWordIndex = $state(0);
 
+	let formRef = $state<HTMLFormElement | null>(null);
+	let inputRef = $state<HTMLInputElement | null>(null);
+
 	let inputRevealWord = $state(false);
 	let inputError = $state<string | null>(null);
 
@@ -54,19 +57,26 @@
 
 		if (currentWordIndex < MAX_PASSPHRASE_WORDS - 1) {
 			currentWordIndex += 1;
-			(event.currentTarget as HTMLFormElement).reset();
+			formRef?.reset();
+			inputRef?.focus();
 			return;
 		}
 
+		let isUnlocked = false;
+
 		try {
 			await vault.unlock(passphrase.join(' '));
-			router.show(callbackUrl);
+			isUnlocked = true;
 		} catch (error) {
 			toast.error('Invalid passphrase. Please try again.');
 			currentWordIndex = 0;
 		} finally {
 			// Clear passphrase from memory
 			passphrase = [];
+		}
+
+		if (isUnlocked) {
+			router.show(callbackUrl);
 		}
 	}
 </script>
@@ -80,37 +90,35 @@
 		</Card.Description>
 	</Card.Header>
 	<Card.Content class="px-4">
-		<form onsubmit={handleSubmit} autocomplete="off">
+		<form bind:this={formRef} onsubmit={handleSubmit} autocomplete="off">
 			<div class="grid gap-2">
 				<Label for="passphrase-word">
 					Word {currentWordIndex + 1} of {MAX_PASSPHRASE_WORDS}
 				</Label>
-				{#key currentWordIndex}
-					<InputGroup.Root>
-						<InputGroup.Input
-							autofocus
-							name="passphrase-word"
-							type={inputRevealWord ? 'text' : 'password'}
-							autocomplete="one-time-code"
-							defaultValue={passphrase[currentWordIndex] ?? ''}
-							oninput={() => (inputError = null)}
-						/>
-						<InputGroup.Addon align="inline-end">
-							<InputGroup.Button
-								aria-label={inputRevealWord ? 'Hide passphrase word' : 'Show passphrase word'}
-								type="button"
-								size="icon-xs"
-								onclick={() => (inputRevealWord = !inputRevealWord)}
-							>
-								{#if inputRevealWord}
-									<EyeIcon />
-								{:else}
-									<EyeOffIcon />
-								{/if}
-							</InputGroup.Button>
-						</InputGroup.Addon>
-					</InputGroup.Root>
-				{/key}
+				<InputGroup.Root>
+					<InputGroup.Input
+						bind:ref={inputRef}
+						name="passphrase-word"
+						type={inputRevealWord ? 'text' : 'password'}
+						autocomplete="one-time-code"
+						defaultValue={passphrase[currentWordIndex] ?? ''}
+						oninput={() => (inputError = null)}
+					/>
+					<InputGroup.Addon align="inline-end">
+						<InputGroup.Button
+							aria-label={inputRevealWord ? 'Hide passphrase word' : 'Show passphrase word'}
+							type="button"
+							size="icon-xs"
+							onclick={() => (inputRevealWord = !inputRevealWord)}
+						>
+							{#if inputRevealWord}
+								<EyeIcon />
+							{:else}
+								<EyeOffIcon />
+							{/if}
+						</InputGroup.Button>
+					</InputGroup.Addon>
+				</InputGroup.Root>
 				{#if inputError}
 					<p class="text-sm text-destructive">{inputError}</p>
 				{/if}
@@ -139,6 +147,6 @@
 			<ArrowRightIcon />
 		</Button>
 
-		<Button class="ml-auto" type="submit">Continue</Button>
+		<Button class="ml-auto" type="submit" onclick={() => formRef?.requestSubmit()}>Continue</Button>
 	</Card.Footer>
 </Card.Root>
