@@ -104,7 +104,7 @@
 			{/if}
 		{/each}
 		{#if entryItem.items.length === 0}
-			<p class="text-center text-muted-foreground">No items in this entry.</p>
+			<p class="py-3 text-center text-muted-foreground">No items in this entry.</p>
 		{/if}
 
 		<Separator />
@@ -119,7 +119,7 @@
 		</div>
 	</div>
 {:else}
-	<p class="text-center text-muted-foreground">
+	<p class="py-3 text-center text-muted-foreground">
 		{#if !vault.isUnlocked}
 			Vault is locked.
 		{:else}

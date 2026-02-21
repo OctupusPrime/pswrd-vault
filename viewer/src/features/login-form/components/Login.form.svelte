@@ -26,7 +26,7 @@
 	let currentWordIndex = $state(0);
 
 	let inputRevealWord = $state(false);
-	let errorMessage = $state<string | null>(null);
+	let inputError = $state<string | null>(null);
 
 	const isPreviousDisabled = $derived.by(() => {
 		if (currentWordIndex === 0) return true;
@@ -46,7 +46,7 @@
 		const word = formData.get('passphrase-word') as string;
 
 		if (!word || word.trim() === '') {
-			errorMessage = 'Word cannot be empty';
+			inputError = 'Word cannot be empty';
 			return;
 		}
 
@@ -62,8 +62,7 @@
 			await vault.unlock(passphrase.join(' '));
 			router.show(callbackUrl);
 		} catch (error) {
-			errorMessage = 'Invalid passphrase. Please try again.';
-			toast.error(errorMessage);
+			toast.error('Invalid passphrase. Please try again.');
 			currentWordIndex = 0;
 		} finally {
 			// Clear passphrase from memory
@@ -94,7 +93,7 @@
 							type={inputRevealWord ? 'text' : 'password'}
 							autocomplete="one-time-code"
 							defaultValue={passphrase[currentWordIndex] ?? ''}
-							oninput={() => (errorMessage = null)}
+							oninput={() => (inputError = null)}
 						/>
 						<InputGroup.Addon align="inline-end">
 							<InputGroup.Button
@@ -112,8 +111,8 @@
 						</InputGroup.Addon>
 					</InputGroup.Root>
 				{/key}
-				{#if errorMessage}
-					<p class="text-sm text-destructive">{errorMessage}</p>
+				{#if inputError}
+					<p class="text-sm text-destructive">{inputError}</p>
 				{/if}
 			</div>
 		</form>

@@ -3,10 +3,12 @@
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import SunIcon from '@lucide/svelte/icons/sun';
 	import MoonIcon from '@lucide/svelte/icons/moon';
+	import LockIcon from '@lucide/svelte/icons/lock';
 
 	import { Button } from '$lib/components/ui/button/index.js';
 
 	import { appearance } from '$lib/stores/appearance.svelte';
+	import { vault } from '$lib/stores/vault.svelte';
 
 	interface Props {
 		title: string;
@@ -14,6 +16,11 @@
 	}
 
 	let { title, previousPageUrl }: Props = $props();
+
+	const handleLockVault = () => {
+		vault.lock();
+		router.show('/login');
+	};
 </script>
 
 <header class="flex h-12 items-center gap-2 border-b bg-background px-4">
@@ -38,6 +45,8 @@
 	>
 		<SunIcon class="scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
 		<MoonIcon class="absolute scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-		<span class="sr-only">Toggle theme</span>
+	</Button>
+	<Button aria-label="Lock vault" variant="outline" size="icon-sm" onclick={handleLockVault}>
+		<LockIcon />
 	</Button>
 </header>

@@ -58,7 +58,13 @@ async function decrypt(ciphertext: string, passKey: Uint8Array): Promise<string>
 		decipher
 	);
 
-	return new TextDecoder().decode(decrypted);
+	const plaintext = new TextDecoder().decode(decrypted);
+
+	new Uint8Array(decrypted).fill(0);
+	decipher.fill(0);
+	buffer.fill(0);
+
+	return plaintext;
 }
 
 const VaultSchema = v.object({
