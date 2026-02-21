@@ -14,7 +14,24 @@
 		if (!vault.isUnlocked || !vault.data) return [];
 
 		const search = entriesListStore.search.toLowerCase();
-		return vault.data.entries.filter((entry) => entry.name.toLowerCase().includes(search));
+		const results = vault.data.entries.filter((entry) => entry.name.toLowerCase().includes(search));
+
+		const sortBy = entriesListStore.sortBy;
+		const sortOrder = entriesListStore.sortOrder;
+
+		return results.sort((a, b) => {
+			let compareValue = 0;
+
+			if (sortBy === 'name') {
+				compareValue = a.name.localeCompare(b.name);
+			} else if (sortBy === 'created-at') {
+				compareValue = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+			} else if (sortBy === 'updated-at') {
+				compareValue = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+			}
+
+			return sortOrder === 'asc' ? compareValue : -compareValue;
+		});
 	});
 
 	const handleEntryClick = (entryId: string) => {
