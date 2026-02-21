@@ -8,7 +8,6 @@
 
 	import { vault } from '$lib/stores/vault.svelte';
 	import { entriesListStore } from '../stores/entries-list-state.svelte.js';
-	import { getDeterministicEmoji } from '../utils.js';
 
 	const filteredEntries = $derived.by(() => {
 		if (!vault.isUnlocked || !vault.data) return [];
@@ -42,19 +41,13 @@
 <Table.Root>
 	<Table.Header>
 		<Table.Row>
-			<Table.Head class="w-12 text-center">🔑</Table.Head>
 			<Table.Head>Name</Table.Head>
-			<Table.Head class="text-end">Updated At</Table.Head>
+			<Table.Head class="w-24 text-end">Updated At</Table.Head>
 		</Table.Row>
 	</Table.Header>
 	<Table.Body>
 		{#each filteredEntries as entry (entry.id)}
 			<Table.Row>
-				<Table.Cell>
-					<div class="grid h-8 w-8 place-items-center rounded-full bg-input text-lg">
-						{getDeterministicEmoji(entry.name)}
-					</div>
-				</Table.Cell>
 				<Table.Cell>
 					<Button variant="link" class="px-0" onclick={() => handleEntryClick(entry.id)}>
 						<Highlighter text={entry.name} search={entriesListStore.search} />

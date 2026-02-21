@@ -66,12 +66,14 @@
 		</InputGroup.Root>
 	</div>
 	<Popover.Root bind:open={sortDialogOpen}>
-		<Popover.Trigger class={buttonVariants({ variant: 'outline', size: 'icon' })}>
-			<ArrowDownUpIcon />
-		</Popover.Trigger>
+		<div class="rounded-md bg-background">
+			<Popover.Trigger class={buttonVariants({ variant: 'outline', size: 'icon' })}>
+				<ArrowDownUpIcon />
+			</Popover.Trigger>
+		</div>
 		<Popover.Content sideOffset={8} class="mr-4 w-44 space-y-4 p-3 sm:mr-0">
 			<RadioGroup.Root bind:value={sortQuery}>
-				<Label>Sort by</Label>
+				<Label>Sort By</Label>
 				<div class="flex items-center space-x-2">
 					<RadioGroup.Item value="name" id="r2" />
 					<Label for="r2">Name</Label>
@@ -86,7 +88,7 @@
 				</div>
 			</RadioGroup.Root>
 			<RadioGroup.Root bind:value={sortOrderQuery}>
-				<Label>Sort direction</Label>
+				<Label>Sort Direction</Label>
 				<div class="flex items-center space-x-2">
 					<RadioGroup.Item value="asc" id="r4" />
 					<Label for="r4">Ascending</Label>
