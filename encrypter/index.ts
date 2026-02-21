@@ -322,24 +322,34 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
           break;
         }
 
-        const { newItemType, newItemValue } = await prompts([
-          {
-            type: "select",
-            name: "newItemType",
-            message: "Select item type:",
-            choices: [
-              { title: "Public", value: "public" },
-              { title: "Secret", value: "secret" },
-            ],
-          },
-          {
+        const { newItemType } = await prompts({
+          type: "select",
+          name: "newItemType",
+          message: "Select item type:",
+          choices: [
+            { title: "Public", value: "public" },
+            { title: "Secret", value: "secret" },
+          ],
+        });
+
+        let newItemValue = "";
+        console.log("Enter item value (press Enter twice to finish):");
+
+        while (true) {
+          const { line } = await prompts({
             type: "text",
-            name: "newItemValue",
-            message: "Enter item value:",
-            validate: (val: string) =>
-              val.trim().length > 0 ? true : "Value cannot be empty",
-          },
-        ]);
+            name: "line",
+            message: ">",
+          });
+
+          if (!line || line.trim() === "") break;
+          newItemValue += (newItemValue ? "\n" : "") + line;
+        }
+
+        if (newItemValue.trim().length === 0) {
+          console.log("Value cannot be empty");
+          break;
+        }
 
         selectedEntry.items.push({
           id: newItemId,
