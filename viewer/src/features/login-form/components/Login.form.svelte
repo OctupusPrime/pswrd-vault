@@ -1,5 +1,6 @@
 <script lang="ts">
 	import router from 'page';
+	import { toast } from 'svelte-sonner';
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import EyeIcon from '@lucide/svelte/icons/eye';
@@ -62,6 +63,7 @@
 			router.show(callbackUrl);
 		} catch (error) {
 			errorMessage = 'Invalid passphrase. Please try again.';
+			toast.error(errorMessage);
 			currentWordIndex = 0;
 		} finally {
 			// Clear passphrase from memory
@@ -70,15 +72,15 @@
 	}
 </script>
 
-<Card.Root class="-my-4 w-full">
-	<Card.Header>
+<Card.Root class="w-full py-4">
+	<Card.Header class="px-4">
 		<Card.Title>Unlock Vault</Card.Title>
 		<Card.Description>
 			Enter your passphrase one word at a time. Press <Kbd.Root>Enter</Kbd.Root>
 			after each word to continue.
 		</Card.Description>
 	</Card.Header>
-	<Card.Content>
+	<Card.Content class="px-4">
 		<form onsubmit={handleSubmit} autocomplete="off">
 			<div class="grid gap-2">
 				<Label for="passphrase-word">
@@ -116,7 +118,7 @@
 			</div>
 		</form>
 	</Card.Content>
-	<Card.Footer class="flex items-center gap-2">
+	<Card.Footer class="flex items-center gap-2 px-4">
 		<Button
 			size="icon"
 			aria-label="Back"

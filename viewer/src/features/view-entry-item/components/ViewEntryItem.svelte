@@ -1,9 +1,12 @@
 <script lang="ts">
+	import { toast } from 'svelte-sonner';
+	import dayjs from 'dayjs';
 	import CopyIcon from '@lucide/svelte/icons/copy';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Separator } from '$lib/components/ui/separator/index.js';
 
 	import { vault } from '$lib/stores/vault.svelte';
 
@@ -36,7 +39,7 @@
 				value: revealResult
 			};
 		} catch (error) {
-			console.error('Error revealing item:', error);
+			toast.error('Failed to reveal item. Please try again.');
 		}
 	};
 
@@ -46,8 +49,9 @@
 		try {
 			const valueToCopy = await vault.revealItem(entryItem.id, itemId);
 			await navigator.clipboard.writeText(valueToCopy);
+			toast.success('Item copied to clipboard!');
 		} catch (error) {
-			console.error('Error copying item value:', error);
+			toast.error('Failed to copy item. Please try again.');
 		}
 	};
 </script>
@@ -70,9 +74,9 @@
 							onclick={() => toggleRevealItem(item.id)}
 						>
 							{#if isRevealed}
-								<EyeOffIcon />
-							{:else}
 								<EyeIcon />
+							{:else}
+								<EyeOffIcon />
 							{/if}
 						</Button>
 						<Button variant="outline" size="icon-sm" onclick={() => handleCopyItem(item.id)}>
@@ -102,6 +106,17 @@
 		{#if entryItem.items.length === 0}
 			<p class="text-center text-muted-foreground">No items in this entry.</p>
 		{/if}
+
+		<Separator />
+
+		<div class="flex justify-between text-sm text-muted-foreground">
+			<span>Updated At:</span>
+			<span>{dayjs(entryItem.updatedAt).format('DD/MM/YYYY HH:mm ')}</span>
+		</div>
+		<div class="flex justify-between text-sm text-muted-foreground">
+			<span>Created At:</span>
+			<span>{dayjs(entryItem.createdAt).format('DD/MM/YYYY HH:mm ')}</span>
+		</div>
 	</div>
 {:else}
 	<p class="text-center text-muted-foreground">
