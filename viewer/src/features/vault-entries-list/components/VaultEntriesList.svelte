@@ -10,10 +10,10 @@
 	import { entriesListStore } from '../stores/entries-list-state.svelte.js';
 
 	const filteredEntries = $derived.by(() => {
-		if (!vault.isUnlocked || !vault.data) return [];
+		if (!vault.entries) return [];
 
 		const search = entriesListStore.search.toLowerCase();
-		const results = vault.data.entries.filter((entry) => entry.name.toLowerCase().includes(search));
+		const results = vault.entries.filter((entry) => entry.name.toLowerCase().includes(search));
 
 		const sortBy = entriesListStore.sortBy;
 		const sortOrder = entriesListStore.sortOrder;
@@ -59,8 +59,8 @@
 			</Table.Row>
 		{/each}
 		{#if filteredEntries.length === 0}
-			<Table.Row class="h-14">
-				<Table.Cell colspan={3} class="text-center">
+			<Table.Row style="height: 52px;">
+				<Table.Cell colspan={2} class="text-center">
 					{#if entriesListStore.search}
 						No entries found
 					{:else if !vault.isUnlocked}

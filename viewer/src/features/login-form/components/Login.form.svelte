@@ -1,8 +1,6 @@
 <script lang="ts">
 	import router from 'page';
 	import { toast } from 'svelte-sonner';
-	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
-	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 
@@ -13,6 +11,7 @@
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
 
 	import { vault } from '$lib/stores/vault.svelte';
+	import { MAX_PASSPHRASE_WORDS } from '$lib/consts';
 
 	interface Props {
 		callbackUrl: string;
@@ -20,9 +19,7 @@
 
 	let { callbackUrl }: Props = $props();
 
-	const MAX_PASSPHRASE_WORDS = 12;
-
-	let passphrase = $state<string[]>([]);
+	let keyBuffer = new Uint8Array();
 	let currentWordIndex = $state(0);
 
 	let formRef = $state<HTMLFormElement | null>(null);
@@ -31,19 +28,10 @@
 	let inputRevealWord = $state(false);
 	let inputError = $state<string | null>(null);
 
-	const isPreviousDisabled = $derived.by(() => {
-		if (currentWordIndex === 0) return true;
-		return false;
-	});
-
-	const isNextDisabled = $derived.by(() => {
-		if (currentWordIndex === MAX_PASSPHRASE_WORDS - 1) return true;
-		if (!passphrase[currentWordIndex]) return true;
-		return false;
-	});
-
 	async function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
+
+		const encoder = new TextEncoder();
 
 		const formData = new FormData(event.currentTarget as HTMLFormElement);
 		const word = formData.get('passphrase-word') as string;
@@ -53,9 +41,17 @@
 			return;
 		}
 
-		passphrase[currentWordIndex] = word.trim();
+		const isNotLastWord = currentWordIndex < MAX_PASSPHRASE_WORDS - 1;
 
-		if (currentWordIndex < MAX_PASSPHRASE_WORDS - 1) {
+		const encodedWord = encoder.encode(word.trim() + (isNotLastWord ? ' ' : ''));
+		const newKeyBuffer = new Uint8Array(keyBuffer.length + encodedWord.length);
+		newKeyBuffer.set(keyBuffer);
+		newKeyBuffer.set(encodedWord, keyBuffer.length);
+
+		keyBuffer.fill(0);
+		keyBuffer = newKeyBuffer;
+
+		if (isNotLastWord) {
 			currentWordIndex += 1;
 			formRef?.reset();
 			inputRef?.focus();
@@ -65,14 +61,14 @@
 		let isUnlocked = false;
 
 		try {
-			await vault.unlock(passphrase.join(' '));
+			await vault.unlock(keyBuffer);
 			isUnlocked = true;
 		} catch (error) {
 			toast.error('Invalid passphrase. Please try again.');
 			currentWordIndex = 0;
 		} finally {
-			// Clear passphrase from memory
-			passphrase = [];
+			keyBuffer.fill(0);
+			keyBuffer = new Uint8Array();
 		}
 
 		if (isUnlocked) {
@@ -100,8 +96,7 @@
 						bind:ref={inputRef}
 						name="passphrase-word"
 						type={inputRevealWord ? 'text' : 'password'}
-						autocomplete="one-time-code"
-						defaultValue={passphrase[currentWordIndex] ?? ''}
+						autocomplete="off"
 						oninput={() => (inputError = null)}
 					/>
 					<InputGroup.Addon align="inline-end">
@@ -125,28 +120,7 @@
 			</div>
 		</form>
 	</Card.Content>
-	<Card.Footer class="flex items-center gap-2 px-4">
-		<Button
-			size="icon"
-			aria-label="Back"
-			variant="outline"
-			type="button"
-			disabled={isPreviousDisabled}
-			onclick={() => (currentWordIndex -= 1)}
-		>
-			<ArrowLeftIcon />
-		</Button>
-		<Button
-			size="icon"
-			aria-label="Next"
-			variant="outline"
-			type="button"
-			disabled={isNextDisabled}
-			onclick={() => (currentWordIndex += 1)}
-		>
-			<ArrowRightIcon />
-		</Button>
-
-		<Button class="ml-auto" type="submit" onclick={() => formRef?.requestSubmit()}>Continue</Button>
+	<Card.Footer class="px-4">
+		<Button type="submit" class="ml-auto" onclick={() => formRef?.requestSubmit()}>Continue</Button>
 	</Card.Footer>
 </Card.Root>

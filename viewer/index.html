@@ -6,8 +6,24 @@
 			name="viewport"
 			content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"
 		/>
+		<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+		<meta name="referrer" content="no-referrer" />
 		<title>pswrd-vault</title>
 
+		<script>
+			(function () {
+				window.fetch = function () {
+					return Promise.reject(new TypeError('Network request blocked.'));
+				};
+				window.XMLHttpRequest = function () {
+					throw new Error('Network request blocked.');
+				};
+				navigator.sendBeacon = () => false;
+				window.WebSocket = undefined;
+				window.EventSource = undefined;
+				window.open = () => null;
+			})();
+		</script>
 		<script>
 			if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
 				document.querySelector('html').classList.add('dark');

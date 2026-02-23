@@ -17,7 +17,7 @@
 
 	let { title, previousPageUrl }: Props = $props();
 
-	const handleLockVault = () => {
+	const lockVault = () => {
 		vault.lock();
 		router.show('/login');
 	};
@@ -46,7 +46,7 @@
 		<SunIcon class="scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
 		<MoonIcon class="absolute scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
 	</Button>
-	<Button aria-label="Lock vault" variant="outline" size="icon-sm" onclick={handleLockVault}>
+	<Button aria-label="Lock vault" variant="outline" size="icon-sm" onclick={lockVault}>
 		<LockIcon />
 	</Button>
 </header>

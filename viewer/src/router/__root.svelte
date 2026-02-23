@@ -60,6 +60,8 @@
 
 	router('/', authMiddleware, (ctx) => {
 		use({
+			layout: import('./(authenticated)/route.svelte'),
+			layoutName: 'authenticated-layout',
 			page: import('./(authenticated)/index.svelte'),
 			pageName: 'index'
 		});
@@ -68,6 +70,8 @@
 
 	router('/:entryId', authMiddleware, (ctx) => {
 		use({
+			layout: import('./(authenticated)/route.svelte'),
+			layoutName: 'authenticated-layout',
 			page: import('./(authenticated)/$entryId.svelte'),
 			pageName: 'entry'
 		});

@@ -8,6 +8,7 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 
 	import { vault } from '$lib/stores/vault.svelte';
+	import { SECRET_VALUE_AUTO_HIDE_MS } from '$lib/consts';
 
 	interface Props {
 		entryId: string;
@@ -15,18 +16,24 @@
 
 	let { entryId }: Props = $props();
 
-	const entryItem = $derived.by(() => {
-		if (!vault.isUnlocked || !vault.data) return null;
-		return vault.data.entries.find((entry) => entry.id === entryId) || null;
-	});
+	const entryItem = $derived.by(() => vault.getEntry(entryId));
 
 	let revealedItem = $state<{ itemId: string; value: string } | null>(null);
+	let autoHideTimer: ReturnType<typeof setTimeout> | null = null;
+
+	const clearRevealedItem = () => {
+		revealedItem = null;
+		if (autoHideTimer) {
+			clearTimeout(autoHideTimer);
+			autoHideTimer = null;
+		}
+	};
 
 	const toggleRevealItem = async (itemId: string) => {
 		if (!entryItem) return;
 
 		if (revealedItem && revealedItem.itemId === itemId) {
-			revealedItem = null;
+			clearRevealedItem();
 			return;
 		}
 
@@ -37,6 +44,9 @@
 				itemId,
 				value: revealResult
 			};
+
+			if (autoHideTimer) clearTimeout(autoHideTimer);
+			autoHideTimer = setTimeout(clearRevealedItem, SECRET_VALUE_AUTO_HIDE_MS);
 		} catch (error) {
 			toast.error('Failed to reveal item.');
 		}

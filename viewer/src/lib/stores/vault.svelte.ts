@@ -26,7 +26,7 @@ async function decrypt(ciphertext: string, passKey: Uint8Array): Promise<string>
 
 	const keyMaterial = await window.crypto.subtle.importKey(
 		'raw',
-		passKey.buffer as ArrayBuffer,
+		passKey.slice().buffer,
 		{ name: 'PBKDF2' },
 		false,
 		['deriveKey']
@@ -92,18 +92,18 @@ const VaultSchema = v.object({
 });
 
 class VaultStore {
-	data = $state<v.InferOutput<typeof VaultSchema> | undefined>();
+	#data = $state<v.InferOutput<typeof VaultSchema> | undefined>();
 	isUnlocked = $state(false);
 
 	#passwordBuffer = new Uint8Array(0);
 
-	async unlock(passKey: string) {
+	async unlock(passKey: Uint8Array<ArrayBuffer>) {
 		try {
-			this.#passwordBuffer = new TextEncoder().encode(passKey);
+			this.#passwordBuffer = passKey;
 
 			const decrypted = await decrypt(vaultFile, this.#passwordBuffer);
 
-			this.data = v.parse(VaultSchema, JSON.parse(decrypted));
+			this.#data = v.parse(VaultSchema, JSON.parse(decrypted));
 			this.isUnlocked = true;
 		} catch (error) {
 			this.lock();
@@ -114,14 +114,14 @@ class VaultStore {
 	lock() {
 		this.#passwordBuffer.fill(0);
 		this.#passwordBuffer = new Uint8Array(0);
-		this.data = undefined;
+		this.#data = undefined;
 		this.isUnlocked = false;
 	}
 
 	async revealItem(entryId: string, itemId: string): Promise<string> {
-		if (!this.isUnlocked || !this.data) throw new Error('Vault is locked');
+		if (!this.isUnlocked || !this.#data) throw new Error('Vault is locked');
 
-		const entry = this.data.entries.find((e) => e.id === entryId);
+		const entry = this.#data.entries.find((e) => e.id === entryId);
 		if (!entry) throw new Error('Entry not found');
 
 		const item = entry.items.find((i) => i.id === itemId);
@@ -129,7 +129,30 @@ class VaultStore {
 
 		if (item.type === 'public') return item.value;
 
-		return await decrypt(item.value, this.#passwordBuffer);
+		const decrypted = await decrypt(item.value, this.#passwordBuffer);
+
+		return decrypted;
+	}
+
+	get entries() {
+		if (!this.#data) return [];
+
+		return this.#data.entries.map((e) => ({
+			id: e.id,
+			name: e.name,
+			createdAt: e.createdAt,
+			updatedAt: e.updatedAt
+		}));
+	}
+
+	getEntry(entryId: string) {
+		if (!this.#data) return null;
+
+		const entry = this.#data.entries.find((e) => e.id === entryId);
+		if (!entry) return null;
+
+		// Return a copy of the entry without the item values
+		return { ...entry, items: entry.items.map((i) => ({ ...i })) };
 	}
 }
 
