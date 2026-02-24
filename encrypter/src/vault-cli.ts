@@ -1,4 +1,6 @@
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+
 import prompts from "prompts";
 import z from "zod";
 
@@ -94,34 +96,56 @@ const refineId = (id: string) => {
     .replace(/^-+|-+$/g, "");
 };
 
-async function getPasswordBuffer() {
-  console.log("Enter your 12-word recovery phrase one by one.");
+async function getPasswordBuffer(
+  passwordWordsCount: number = 12,
+): Promise<Buffer> {
+  console.log(
+    `Enter your ${passwordWordsCount}-word recovery phrase one by one.`,
+  );
 
-  const words = await prompts(
-    Array.from({ length: 12 }).map((_, i) => ({
+  let keyBuffer = Buffer.alloc(0);
+
+  for (let i = 0; i < passwordWordsCount; i++) {
+    const { word } = await prompts({
       type: "password",
-      name: `words.${i}`,
+      name: "word",
       message: `${i + 1}:`,
       validate: (val: string) =>
         val.trim().length > 0 ? true : "Word cannot be empty",
-    })),
-  );
+    });
 
-  const passwordString = Object.values(words).join(" ");
+    const isNotLastWord = i < passwordWordsCount - 1;
 
-  const buffer = Buffer.from(passwordString, "utf-8");
+    const wordBuffer = Buffer.from(
+      word.trim() + (isNotLastWord ? " " : ""),
+      "utf-8",
+    );
 
-  return buffer;
+    const newKeyBuffer = Buffer.alloc(keyBuffer.length + wordBuffer.length);
+    keyBuffer.copy(newKeyBuffer);
+    wordBuffer.copy(newKeyBuffer, keyBuffer.length);
+
+    keyBuffer.fill(0);
+    wordBuffer.fill(0);
+    keyBuffer = newKeyBuffer;
+  }
+
+  return keyBuffer;
 }
 
-async function main() {
-  if (!process.env.VAULT_PATH)
-    throw new Error("VAULT_PATH environment variable is not set.");
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await fs.access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-  const vaultFile = Bun.file(process.env.VAULT_PATH);
-  const vaultFileExists = await vaultFile.exists();
+async function vaultCLI(filePath: string, passwordWordsCount: number) {
+  const vaultFileExists = await fileExists(filePath);
 
-  const passwordBuffer = await getPasswordBuffer();
+  const passwordBuffer = await getPasswordBuffer(passwordWordsCount);
 
   if (!vaultFileExists) {
     console.log("No vault file found. Creating new vault...");
@@ -134,17 +158,16 @@ async function main() {
   } else {
     console.log("Vault file found. Decrypting...");
 
-    const encryptedVault = await vaultFile.text();
+    const encryptedVault = await fs.readFile(filePath, "utf-8");
 
     try {
       vaultContents = VaultSchema.parse(
         JSON.parse(decrypt(encryptedVault, passwordBuffer)),
       );
     } catch (error) {
-      console.log(
-        "Failed to decrypt vault. Incorrect password or corrupted file.",
+      throw new Error(
+        "Failed to decrypt vault. Please check your recovery phrase and try again.",
       );
-      return;
     }
   }
 
@@ -245,6 +268,17 @@ async function main() {
           break;
         }
 
+        const { confirmEntryDelete } = await prompts({
+          type: "confirm",
+          name: "confirmEntryDelete",
+          message: `Are you sure you want to delete the entry "${entryToDelete.name}"?`,
+        });
+
+        if (!confirmEntryDelete) {
+          console.log("Entry deletion canceled.");
+          break;
+        }
+
         vaultContents.entries = vaultContents.entries.filter(
           (e) => e.id !== deleteEntryId,
         );
@@ -257,7 +291,9 @@ async function main() {
           passwordBuffer,
         );
 
-        await vaultFile.write(encryptedVault);
+        await fs.writeFile(`${filePath}.tmp`, encryptedVault, "utf-8");
+        await fs.rename(`${filePath}.tmp`, filePath);
+        await fs.chmod(filePath, 0o600);
         console.log("Vault saved successfully.");
         break;
       case "exit":
@@ -367,9 +403,8 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
       case "view_items":
         console.log("Items:");
         selectedEntry.items.forEach((item) => {
-          console.log(
-            `- ${item.name} (${item.type}): ${item.type === "secret" ? "*****" : item.value}`,
-          );
+          console.log(`- ${item.name} (${item.type}):`);
+          console.log(`${item.type === "secret" ? "*****" : item.value}`);
         });
         break;
       case "delete_item":
@@ -392,6 +427,17 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
           break;
         }
 
+        const { confirmItemDelete } = await prompts({
+          type: "confirm",
+          name: "confirmItemDelete",
+          message: `Are you sure you want to delete the item "${itemToDelete.name}"?`,
+        });
+
+        if (!confirmItemDelete) {
+          console.log("Item deletion canceled.");
+          break;
+        }
+
         selectedEntry.items = selectedEntry.items.filter(
           (i) => i.id !== deleteItemId,
         );
@@ -406,4 +452,4 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
   }
 }
 
-main().catch(console.error);
+export { vaultCLI };

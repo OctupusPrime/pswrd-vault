@@ -1,0 +1,10 @@
+{
+  "name": "pswrd-vault-root",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build-12-words": "VITE_MAX_PASSPHRASE_WORDS=12 npm run build --prefix viewer && npm run build 12 --prefix encrypter",
+    "build-24-words": "VITE_MAX_PASSPHRASE_WORDS=24 npm run build --prefix viewer && npm run build 24 --prefix encrypter"
+  }
+}

@@ -12,6 +12,14 @@ export default defineConfig(({ command }) => {
 			tailwindcss(),
 			viteSingleFile(),
 			{
+				name: 'vault.bin-erraser',
+				transform(_code, id) {
+					if (command === 'build' && id.endsWith('vault.bin?raw')) {
+						return `export default "{{%VAULT_VALUE%}}"`;
+					}
+				}
+			},
+			{
 				name: 'inject-csp',
 				transformIndexHtml(html) {
 					if (command === 'build') {
