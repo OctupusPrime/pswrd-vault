@@ -99,7 +99,7 @@ class VaultStore {
 
 	async unlock(passKey: Uint8Array<ArrayBuffer>) {
 		try {
-			this.#passwordBuffer = passKey;
+			this.#passwordBuffer = passKey.slice();
 
 			const decrypted = await decrypt(vaultFile, this.#passwordBuffer);
 
