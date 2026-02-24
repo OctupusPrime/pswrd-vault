@@ -100,7 +100,7 @@ async function getPasswordBuffer(
   passwordWordsCount: number = 12,
 ): Promise<Buffer> {
   console.log(
-    `Enter your ${passwordWordsCount}-word recovery phrase one by one.`,
+    `[Recovery Phrase] Enter your ${passwordWordsCount}-word recovery phrase, one word at a time.`,
   );
 
   let keyBuffer = Buffer.alloc(0);
@@ -148,15 +148,18 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
   const passwordBuffer = await getPasswordBuffer(passwordWordsCount);
 
   if (!vaultFileExists) {
-    console.log("No vault file found. Creating new vault...");
+    console.log(`\n[New Vault] No vault file found at "${filePath}".`);
 
     vaultContents = {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       entries: [],
     };
+
+    console.log("New vault initialized. Remember to save before exiting.");
   } else {
-    console.log("Vault file found. Decrypting...");
+    console.log(`\n[Unlock] Vault file found at "${filePath}".`);
+    console.log("Decrypting vault with your recovery phrase...");
 
     const encryptedVault = await fs.readFile(filePath, "utf-8");
 
@@ -164,14 +167,20 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
       vaultContents = VaultSchema.parse(
         JSON.parse(decrypt(encryptedVault, passwordBuffer)),
       );
+      console.log(
+        `Vault decrypted successfully. ${vaultContents.entries.length} entr${
+          vaultContents.entries.length === 1 ? "y" : "ies"
+        } loaded.`,
+      );
     } catch (error) {
       throw new Error(
-        "Failed to decrypt vault. Please check your recovery phrase and try again.",
+        "Decryption failed. Your recovery phrase may be incorrect or the vault file may be corrupted.",
       );
     }
   }
 
   if (!vaultContents) throw new Error("Failed to initialize vault contents.");
+  console.log("");
 
   let running = true;
 
@@ -181,7 +190,9 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
     const { action } = await prompts({
       type: "select",
       name: "action",
-      message: "What do you want to do?",
+      message: `Vault — ${vaultContents.entries.length} entr${
+        vaultContents.entries.length === 1 ? "y" : "ies"
+      } | What would you like to do?`,
       choices: [
         { title: "Add entry", value: "add_entry" },
         {
@@ -212,7 +223,9 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
         const newEntryId = refineId(newEntryName);
 
         if (vaultContents.entries.some((e) => e.id === newEntryId)) {
-          console.log("An entry with that name already exists.");
+          console.log(
+            `An entry named "${newEntryName}" already exists. Please choose a different name.`,
+          );
           break;
         }
 
@@ -224,7 +237,9 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
           items: [],
         });
         vaultContents.updatedAt = new Date().toISOString();
-        console.log("Entry added successfully.");
+        console.log(
+          `Entry "${newEntryName}" added. Don't forget to save your vault.`,
+        );
         break;
       case "view_entry":
         const { viewEntryId } = await prompts({
@@ -242,7 +257,7 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
         );
 
         if (!entryToView) {
-          console.log("Entry not found.");
+          console.log("Entry not found. It may have been deleted.");
           break;
         }
 
@@ -264,7 +279,7 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
         );
 
         if (!entryToDelete) {
-          console.log("Entry not found.");
+          console.log("Entry not found. It may have already been deleted.");
           break;
         }
 
@@ -275,7 +290,7 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
         });
 
         if (!confirmEntryDelete) {
-          console.log("Entry deletion canceled.");
+          console.log("Deletion canceled. No changes were made.");
           break;
         }
 
@@ -283,9 +298,12 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
           (e) => e.id !== deleteEntryId,
         );
         vaultContents.updatedAt = new Date().toISOString();
-        console.log("Entry deleted successfully.");
+        console.log(
+          `Entry "${entryToDelete.name}" deleted. Don't forget to save your vault.`,
+        );
         break;
       case "save":
+        console.log(`Encrypting vault and writing to "${filePath}"...`);
         const encryptedVault = encrypt(
           JSON.stringify(vaultContents),
           passwordBuffer,
@@ -294,7 +312,9 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
         await fs.writeFile(`${filePath}.tmp`, encryptedVault, "utf-8");
         await fs.rename(`${filePath}.tmp`, filePath);
         await fs.chmod(filePath, 0o600);
-        console.log("Vault saved successfully.");
+        console.log(
+          `Vault saved successfully. File permissions set to 600 (owner read/write only).`,
+        );
         break;
       case "exit":
         running = false;
@@ -304,19 +324,21 @@ async function vaultCLI(filePath: string, passwordWordsCount: number) {
 
   passwordBuffer.fill(0);
   vaultContents = undefined;
-  console.log("Exiting. All sensitive data cleared from memory.");
+  console.log(
+    "\n[Exit] Session ended. All sensitive data has been cleared from memory.",
+  );
 }
 
 async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
   if (!vaultContents) {
-    console.log("Vault contents not loaded.");
+    console.log("Error: vault is not loaded. Please restart the CLI.");
     return;
   }
 
   const selectedEntry = vaultContents.entries.find((e) => e.id === entryId);
 
   if (!selectedEntry) {
-    console.log("Entry not found.");
+    console.log("Error: entry not found. It may have been removed.");
     return;
   }
 
@@ -328,7 +350,9 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
     const { entryAction } = await prompts({
       type: "select",
       name: "entryAction",
-      message: "What do you want to do with this entry?",
+      message: `Entry: "${selectedEntry.name}" — ${selectedEntry.items.length} item${
+        selectedEntry.items.length === 1 ? "" : "s"
+      } | What would you like to do?`,
       choices: [
         { title: "Add item", value: "add_item" },
         { title: "View items", value: "view_items", disabled: !entryHasItems },
@@ -354,7 +378,9 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
         const newItemId = refineId(newItemName);
 
         if (selectedEntry.items.some((i) => i.id === newItemId)) {
-          console.log("An item with that name already exists in this entry.");
+          console.log(
+            `An item named "${newItemName}" already exists in "${selectedEntry.name}". Please choose a different name.`,
+          );
           break;
         }
 
@@ -369,7 +395,12 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
         });
 
         let newItemValue = "";
-        console.log("Enter item value (press Enter twice to finish):");
+        const isSecret = newItemType === "secret";
+        console.log(
+          `Enter item value below${
+            isSecret ? " (will be stored encrypted)" : ""
+          }. Press Enter on an empty line to finish:`,
+        );
 
         while (true) {
           const { line } = await prompts({
@@ -383,7 +414,7 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
         }
 
         if (newItemValue.trim().length === 0) {
-          console.log("Value cannot be empty");
+          console.log("Item value cannot be empty. Item was not added.");
           break;
         }
 
@@ -398,10 +429,16 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
         });
         selectedEntry.updatedAt = new Date().toISOString();
         vaultContents.updatedAt = new Date().toISOString();
-        console.log("Item added successfully.");
+        console.log(
+          `Item "${newItemName}" added to "${selectedEntry.name}"${
+            newItemType === "secret" ? " (value encrypted)" : ""
+          }. Don't forget to save your vault.`,
+        );
         break;
       case "view_items":
-        console.log("Items:");
+        console.log(
+          `\nItems in "${selectedEntry.name}" (${selectedEntry.items.length} total):`,
+        );
         selectedEntry.items.forEach((item) => {
           console.log(`- ${item.name} (${item.type}):`);
           console.log(`${item.type === "secret" ? "*****" : item.value}`);
@@ -423,7 +460,7 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
         );
 
         if (!itemToDelete) {
-          console.log("Item not found.");
+          console.log("Item not found. It may have already been deleted.");
           break;
         }
 
@@ -434,14 +471,16 @@ async function viewEntrySubMenu(entryId: string, passKey: Buffer) {
         });
 
         if (!confirmItemDelete) {
-          console.log("Item deletion canceled.");
+          console.log("Deletion canceled. No changes were made.");
           break;
         }
 
         selectedEntry.items = selectedEntry.items.filter(
           (i) => i.id !== deleteItemId,
         );
-        console.log("Item deleted successfully.");
+        console.log(
+          `Item "${itemToDelete.name}" deleted from "${selectedEntry.name}". Don't forget to save your vault.`,
+        );
         selectedEntry.updatedAt = new Date().toISOString();
         vaultContents.updatedAt = new Date().toISOString();
         break;

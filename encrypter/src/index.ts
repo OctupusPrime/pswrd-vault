@@ -24,18 +24,36 @@ function getDateStamp() {
 }
 
 async function main() {
-  if (!VAULT_FILE_PATH)
-    throw new Error("VAULT_PATH environment variable is not set.");
+  console.log("=".repeat(52));
+  console.log(" pswrd-vault — Password Vault Manager");
+  console.log(
+    ` Mode: ${DEVELOPMENT_MODE ? "development (vault.bin output only)" : "production (HTML bundle output)"}`,
+  );
+  console.log(` Vault file: ${VAULT_FILE_PATH}`);
+  console.log("=".repeat(52));
+  console.log("");
 
   await vaultCLI(VAULT_FILE_PATH, MAX_PASSPHRASE_WORDS);
 
-  if (DEVELOPMENT_MODE) return;
+  if (DEVELOPMENT_MODE) {
+    console.log(
+      "\n[Dev] Development mode — skipping HTML bundle generation. vault.bin has been updated.",
+    );
+    return;
+  }
 
+  console.log("\n[Step 1/5] Loading HTML template from viewer build output...");
   const templateModule = await import("../../viewer/dist/index.html");
   const htmlTemplate = templateModule.default;
+  console.log("HTML template loaded.");
 
+  console.log("\n[Step 2/5] Reading encrypted vault data from disk...");
   const vaultData = await fs.readFile(VAULT_FILE_PATH, "utf-8");
+  console.log(`Vault data read (${vaultData.length} bytes).`);
 
+  console.log(
+    "\n[Step 3/5] Injecting vault data into HTML template and preparing output directory...",
+  );
   //@ts-ignore bcs i know that htmlTemplate is a string
   const finalHtml = htmlTemplate.replace("{{%VAULT_VALUE%}}", vaultData);
 
@@ -45,27 +63,37 @@ async function main() {
   const fileName = `vault-${getDateStamp()}.html`;
   const filePath = path.join(vaultsDir, fileName);
 
+  console.log(`Writing output file: ${filePath}`);
   await fs.writeFile(filePath, finalHtml, "utf-8");
-  console.log(`Output written to ${filePath}`);
+  console.log(`Output file written (${finalHtml.length} bytes).`);
 
-  // Generate SHA-256 hash and write hash file
+  console.log("\n[Step 4/5] Generating SHA-256 integrity hash...");
   const hash = crypto.createHash("sha256").update(finalHtml).digest("hex");
   const hashFilePath = `${filePath}.sha256`;
   await fs.writeFile(hashFilePath, `${hash}  ${fileName}\n`, "utf-8");
   console.log(`SHA-256: ${hash}`);
+  console.log(`Hash file written: ${hashFilePath}`);
 
-  // Verify integrity
+  console.log("\n[Step 5/5] Verifying file integrity...");
   const savedHash = (await fs.readFile(hashFilePath, "utf-8")).split(" ")[0];
   if (savedHash === hash) {
-    console.log("Integrity verified ✓");
+    console.log("Integrity check passed. The output file is unmodified. ✓");
   } else {
-    console.error("Integrity check failed ✗");
+    console.error(
+      "Integrity check failed. The hash on disk does not match the generated file. ✗",
+    );
     process.exit(1);
   }
+
+  console.log("\n" + "=".repeat(52));
+  console.log(` Done! Vault bundle ready at:`);
+  console.log(` ${filePath}`);
+  console.log("=".repeat(52));
 }
 
 main().catch((err) => {
   const message = err instanceof Error ? err.message : String(err);
-  console.error(message);
+  console.error(`\n[Fatal Error] ${message}`);
+  console.error("The vault was not saved. No changes were written to disk.");
   process.exit(1);
 });

@@ -10,6 +10,7 @@ A zero-trust, offline-first password vault that compiles into a **single self-co
 
 - [Overview](#overview)
 - [Usage](#usage)
+- [Updating](#updating)
 - [Key Features](#key-features)
 - [Architecture](#architecture)
 - [How It Works](#how-it-works)
@@ -106,11 +107,13 @@ From the entry sub-menu, select **View items** to list all items. Secret items d
 
 #### 7. Saving the Vault
 
-Select **Save vault** from the main menu. The vault is encrypted and written to disk. The CLI also generates the final self-contained `.html` file in the `vaults/` directory alongside a `.sha256` integrity hash.
+Select **Save vault** from the main menu. The vault is encrypted and written to disk.
 
 #### 8. Exiting
 
-Select **Exit**. All sensitive data (passphrase buffers, vault contents) is securely cleared from memory.
+Select **Exit**. The CLI generates the final self-contained `.html` file in the `vaults/` directory alongside a `.sha256` integrity hash. All sensitive data (passphrase buffers, vault contents) is securely cleared from memory.
+
+> **⚠️ CAUTION:** If the vault file was corrupted or modified outside the CLI, the encryption will fail and the HTML file will not be generated. Always use the CLI to manage your vault to ensure integrity.
 
 ### Opening Your Vault in the Browser
 
@@ -122,6 +125,30 @@ Open the generated `vaults/vault-YYYY-MM-DD.html` file in any modern browser —
 cd vaults
 shasum -a 256 -c vault-YYYY-MM-DD.html.sha256
 ```
+
+---
+
+## Updating
+
+When a new version is released, you don't need to re-download the entire archive. Simply replace two files in your existing directory:
+
+> **⚠️ CAUTION:** You must download the release that matches the passphrase length you are already using. If your vault was created with a **12-word** passphrase, download `pswrd-vault-12-words.zip`. If it was created with a **24-word** passphrase, download `pswrd-vault-24-words.zip`. Using the wrong variant will fail to decrypt your vault.
+
+1. Download the new `app.js` and `app.js.sha256` from the [Releases](https://github.com/OctupusPrime/pswrd-vault/releases) page — make sure to pick the correct variant (`pswrd-vault-12-words.zip` or `pswrd-vault-24-words.zip`).
+2. Replace the existing `app.js` and `app.js.sha256` in your directory with the new ones.
+3. Verify the integrity of the new file:
+
+```bash
+shasum -a 256 -c app.js.sha256
+```
+
+4. Run the CLI as usual:
+
+```bash
+node app.js
+```
+
+Your existing `vaults/` directory and previously generated vault files are **not affected** by the update — they remain intact and continue to work as before.
 
 ---
 

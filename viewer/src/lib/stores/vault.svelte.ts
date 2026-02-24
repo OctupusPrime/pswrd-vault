@@ -154,6 +154,15 @@ class VaultStore {
 		// Return a copy of the entry without the item values
 		return { ...entry, items: entry.items.map((i) => ({ ...i })) };
 	}
+
+	getEntryName(entryId: string) {
+		if (!this.#data) return null;
+
+		const entry = this.#data.entries.find((e) => e.id === entryId);
+		if (!entry) return null;
+
+		return entry.name;
+	}
 }
 
 export const vault = new VaultStore();

@@ -4,6 +4,7 @@
 	import SunIcon from '@lucide/svelte/icons/sun';
 	import MoonIcon from '@lucide/svelte/icons/moon';
 	import LockIcon from '@lucide/svelte/icons/lock';
+	import ToolCaseIcon from '@lucide/svelte/icons/tool-case';
 
 	import { Button } from '$lib/components/ui/button/index.js';
 
@@ -33,6 +34,10 @@
 		>
 			<ArrowLeftIcon />
 		</Button>
+	{:else}
+		<div class="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground">
+			<ToolCaseIcon class="size-4" />
+		</div>
 	{/if}
 	<h1 class="text-base font-medium">{title}</h1>
 
