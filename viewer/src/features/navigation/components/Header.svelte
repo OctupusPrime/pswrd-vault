@@ -39,7 +39,7 @@
 			<ToolCaseIcon class="size-4" />
 		</div>
 	{/if}
-	<h1 class="text-base font-medium">{title}</h1>
+	<h1 class="truncate text-base font-medium">{title}</h1>
 
 	<Button
 		aria-label="Toggle theme"

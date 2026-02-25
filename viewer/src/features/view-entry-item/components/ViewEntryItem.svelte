@@ -61,7 +61,7 @@
 			{#if item.type === 'secret'}
 				<div class="">
 					<div class="flex items-center gap-2">
-						<h3 class="font-medium tracking-tight">
+						<h3 class="font-medium tracking-tight break-all">
 							{item.name}
 						</h3>
 						<Button
@@ -86,7 +86,7 @@
 			{:else}
 				<div class="">
 					<div class="flex items-center justify-between gap-2">
-						<h3 class="font-medium tracking-tight">
+						<h3 class="font-medium tracking-tight break-all">
 							{item.name}
 						</h3>
 					</div>
