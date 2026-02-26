@@ -1,6 +1,15 @@
 <script lang="ts">
+	import { onMount, tick } from 'svelte';
+
 	import { Header } from '$features/navigation';
 	import { EntriesListSearch, VaultEntriesList } from '$features/vault-entries-list';
+
+	import { pageScroll } from '$lib/stores/page-scroll.svelte';
+
+	onMount(async () => {
+		await tick();
+		pageScroll.restore('entries');
+	});
 </script>
 
 <div class="sticky top-0 z-20">

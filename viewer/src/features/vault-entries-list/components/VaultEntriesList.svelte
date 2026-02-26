@@ -34,7 +34,7 @@
 	});
 
 	const handleEntryClick = (entryId: string) => {
-		router.show(`/${entryId}`);
+		router.show(`/entries/${entryId}`);
 	};
 </script>
 

@@ -1,8 +1,9 @@
 <script lang="ts">
-	import router from 'page';
+	import router, { type Context } from 'page';
 	import { onDestroy, onMount, type Component } from 'svelte';
 
 	import { vault } from '$lib/stores/vault.svelte';
+	import { pageScroll } from '$lib/stores/page-scroll.svelte';
 
 	type PromiseComponent = {
 		name: string;
@@ -23,7 +24,10 @@
 		pageLoader?: Component;
 	}
 
-	function use(params: UseFnParams) {
+	function use(ctx: Context, params: UseFnParams) {
+		queryParams = ctx.params;
+		ctx.pagename = params.pageName;
+
 		if (params.layout && params.layoutName) {
 			if (params.layoutName !== layout?.name) {
 				layout = {
@@ -45,40 +49,59 @@
 		}
 	}
 
-	function authMiddleware(_ctx: any, next: () => void) {
+	function authMiddleware(_ctx: Context, next: () => void) {
 		if (vault.isUnlocked) next();
 		else router.redirect('/login');
 	}
 
-	router('/login', (ctx) => {
-		use({
-			page: import('./(not-authenticated)/login.svelte'),
-			pageName: 'login'
-		});
-		queryParams = ctx.params;
-	});
+	router('/', authMiddleware, () => router.redirect('/entries'));
 
-	router('/', authMiddleware, (ctx) => {
-		use({
+	router('/entries', authMiddleware, (ctx) =>
+		use(ctx, {
 			layout: import('./(authenticated)/route.svelte'),
 			layoutName: 'authenticated-layout',
-			page: import('./(authenticated)/index.svelte'),
-			pageName: 'index'
-		});
-		queryParams = ctx.params;
-	});
+			page: import('./(authenticated)/entries.svelte'),
+			pageName: 'entries'
+		})
+	);
 
-	router('/:entryId', authMiddleware, (ctx) => {
-		use({
+	router('/entries/:entryId', authMiddleware, (ctx) =>
+		use(ctx, {
 			layout: import('./(authenticated)/route.svelte'),
 			layoutName: 'authenticated-layout',
 			page: import('./(authenticated)/$entryId.svelte'),
 			pageName: 'entry'
-		});
-		queryParams = ctx.params;
+		})
+	);
+
+	router('/login', (ctx) =>
+		use(ctx, {
+			layout: import('./(not-authenticated)/route.svelte'),
+			layoutName: 'not-authenticated-layout',
+			page: import('./(not-authenticated)/login.svelte'),
+			pageName: 'login'
+		})
+	);
+
+	router('*', (ctx) =>
+		use(ctx, {
+			layout: import('./(not-authenticated)/route.svelte'),
+			layoutName: 'not-authenticated-layout',
+			page: import('./(not-authenticated)/not-found.svelte'),
+			pageName: 'not-found'
+		})
+	);
+
+	router.exit('*', (ctx, next) => {
+		pageScroll.set(ctx.pagename, window.scrollY);
+		next();
 	});
 
 	onMount(() => {
+		if ('scrollRestoration' in window.history) {
+			window.history.scrollRestoration = 'manual';
+		}
+
 		router.start({
 			hashbang: true
 		});
